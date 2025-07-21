@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gemini AI Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem auto;
+            max-width: 700px;
+            padding: 2rem;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        .response-box {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background-color: #4285f4;
+            color: white;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+    </style>
+</head>
+<body>
+<h1>Gemini AI Chat Assistant</h1>
+<form method="POST">
+    <textarea name="prompt" placeholder="Ask Gemini something..."></textarea>
+    <button type="submit">Ask</button>
+</form>
+
+{% if response %}
+    <h2>Response:</h2>
+    <div class="response-box">{{ response }}</div>
+{% endif %}
+</body>
+</html>

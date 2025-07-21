@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Financial AI Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.07);
+            padding: 30px;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #ffffff;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #ccc;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        input[type="submit"] {
+            margin-top: 30px;
+            background: #00c6ff;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background: #00a0dd;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .link a {
+            color: #00c6ff;
+            text-decoration: none;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>User Registration</h2>
+
+    <form method="POST" action="/register">
+        <label>Username:</label>
+        <input type="text" name="username" placeholder="Enter username" required>
+
+        <label>Password:</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <h3>Financial Profile</h3>
+
+        <label>Full Name:</label>
+        <input type="text" name="name" placeholder="John Doe" required>
+
+        <label>Age:</label>
+        <input type="number" name="age" placeholder="35">
+
+        <label>Gender:</label>
+        <select name="gender">
+            <option value="">--Select--</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+        </select>
+
+        <label>Location:</label>
+        <input type="text" name="location" placeholder="City or State">
+
+        <label>Marital Status:</label>
+        <input type="text" name="marital_status" placeholder="Single/Married">
+
+        <label>Number of Dependents:</label>
+        <input type="number" name="num_dependents" placeholder="e.g. 2">
+
+        <label>Spouse Name:</label>
+        <input type="text" name="spouse_name" placeholder="If applicable">
+
+        <label>Annual Income ($):</label>
+        <input type="number" name="annual_income" step="0.01" placeholder="e.g. 80000">
+
+        <label>Credit Score:</label>
+        <input type="number" name="credit_score" placeholder="e.g. 750">
+
+        <label>Existing Loans:</label>
+        <textarea name="existing_loans" placeholder="Describe your current loans..."></textarea>
+
+        <label>Savings Balance ($):</label>
+        <input type="number" name="savings_balance" step="0.01" placeholder="e.g. 15000">
+
+        <label>Employment Status:</label>
+        <input type="text" name="employment_status" placeholder="Employed/Unemployed/Self-employed">
+
+        <label>Employer Name:</label>
+        <input type="text" name="employer_name" placeholder="Company name">
+
+        <label>Job Title:</label>
+        <input type="text" name="job_title" placeholder="Your designation">
+
+        <label>Years of Experience:</label>
+        <input type="number" name="years_of_experience" placeholder="e.g. 10">
+
+        <input type="submit" value="Register">
+    </form>
+
+    <div class="link">
+        <p>Already have an account? <a href="/login">Login here</a></p>
+    </div>
+</div>
+
+</body>
+</html>

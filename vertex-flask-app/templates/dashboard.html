@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Financial Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            margin: 0;
+            color: #f0f0f0;
+        }
+        .container {
+            padding: 40px;
+            max-width: 1200px;
+            margin: auto;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .logout {
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        .logout form {
+            display: inline;
+        }
+        .logout button {
+            background: #ff4d4d;
+            border: none;
+            padding: 10px 16px;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .glass-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin: 20px 0;
+        }
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .avatar-score {
+            position: relative;
+            width: 180px;
+            height: 300px;
+            margin: 40px auto;
+        }
+        .avatar-score img {
+            width: 100%;
+            height: auto;
+            z-index: 1;
+            position: relative;
+        }
+        .liquid-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0;
+            background: rgba(0, 255, 200, 0.5);
+            border-radius: 0 0 90px 90px;
+            z-index: 0;
+            animation: fillUp 2s ease-out forwards;
+        }
+        @keyframes fillUp {
+            to {
+                height: var(--fill-height);
+            }
+        }
+        .percentage-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .chat-launcher {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+        .chat-launcher button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            padding: 10px 16px;
+            border-radius: 50px;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        #chatModal {
+            display: none;
+            position: fixed;
+            z-index: 1100;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.4);
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        .close {
+            position: absolute;
+            top: 10px; right: 15px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .suggestions {
+            margin-top: 20px;
+        }
+        .suggestions button {
+            margin: 5px 10px 0 0;
+            background: #ddd;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Welcome, {{ user.name }}</h1>
+        <p>Your personalized financial dashboard</p>
+        <div class="logout">
+            <form action="/logout" method="POST">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="info-cards">
+        <div class="card">
+            <h3>Annual Income</h3>
+            <p>${{ user.annual_income }}</p>
+        </div>
+        <div class="card">
+            <h3>Credit Score</h3>
+            <p>{{ user.credit_score }}</p>
+        </div>
+        <div class="card">
+            <h3>Savings Balance</h3>
+            <p>${{ user.savings_balance }}</p>
+        </div>
+        <div class="card">
+            <h3>Employment</h3>
+            <p>{{ user.job_title }} at {{ user.employer_name }}</p>
+        </div>
+    </div>
+
+    <div class="avatar-score">
+        <img src="{{ url_for('static', filename='images/avatar.webp') }}" alt="Avatar">
+        <div class="liquid-fill" id="liquidFillBar"></div>
+        <div class="percentage-label" id="percentageLabel">0%</div>
+    </div>
+
+    <div class="glass-box">
+        <h3>Financial Overview</h3>
+        <canvas id="incomeChart" height="100"></canvas>
+    </div>
+</div>
+
+<div class="chat-launcher">
+    <button onclick="openChatModal()" title="Click here for Financial Chat Bot">
+        <img src="{{ url_for('static', filename='images/chat_icon.png') }}" alt="Chat Icon" width="40" height="40">
+        <span>Click here for Financial Chat Bot</span>
+    </button>
+</div>
+
+<div id="chatModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeChatModal()">&times;</span>
+        <h3>🧠 Financial Chat Bot</h3>
+        <textarea id="chatInput" placeholder="Ask something..."></textarea>
+        <button onclick="sendChat()">Send</button>
+        <button onclick="startVoice()">🎙️ Speak</button>
+        <div id="chatResponse" style="margin-top: 20px;"></div>
+        <div class="suggestions">
+            <strong>Suggestions:</strong><br>
+            <button onclick="sendSuggestion('What can I do to increase savings?')">What can I do to increase savings?</button>
+            <button onclick="sendSuggestion('How to improve credit score?')">How to improve credit score?</button>
+            <button onclick="sendSuggestion('Can I afford a loan?')">Can I afford a loan?</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chatHistory = [];
+
+    function openChatModal() {
+        document.getElementById("chatModal").style.display = "block";
+    }
+    function closeChatModal() {
+        document.getElementById("chatModal").style.display = "none";
+    }
+
+    async function sendChat(prompt = null) {
+        const input = prompt || document.getElementById("chatInput").value;
+        if (!input.trim()) return;
+
+        document.getElementById("chatResponse").innerHTML = `<em>Thinking...</em>`;
+        const res = await fetch("/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: input })
+        });
+
+        const data = await res.json();
+        if (data.response) {
+            chatHistory.push(`<strong>You:</strong> ${input}`);
+            chatHistory.push(`<strong>AI:</strong> ${data.response}`);
+            document.getElementById("chatResponse").innerHTML = chatHistory.join("<br><br>");
+        } else {
+            document.getElementById("chatResponse").innerHTML = `<em>Sorry, no response received.</em>`;
+        }
+
+        document.getElementById("chatInput").value = "";
+    }
+
+    function sendSuggestion(text) {
+        document.getElementById("chatInput").value = text;
+        sendChat(text);
+    }
+
+    function startVoice() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById("chatInput").value = transcript;
+            sendChat(transcript);
+        };
+    }
+
+    // Fill bar animation and label
+    document.addEventListener("DOMContentLoaded", () => {
+        const income = {{ user.annual_income or 0 }};
+        const savings = {{ user.savings_balance or 0 }};
+        const loans = {{ 10000 if user.existing_loans else 0 }};
+        const maxPossible = 150000;
+        const score = ((income + savings - loans) / maxPossible) * 100;
+        const heightPercent = Math.max(10, Math.min(score, 100));
+
+        const fill = document.getElementById("liquidFillBar");
+        fill.style.setProperty('--fill-height', heightPercent + "%");
+
+        const label = document.getElementById("percentageLabel");
+        label.textContent = Math.round(heightPercent) + "%";
+    });
+
+    const ctx = document.getElementById("incomeChart").getContext("2d");
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ["Income", "Savings", "Loans"],
+            datasets: [{
+                label: "Amount ($)",
+                data: [
+                    {{ user.annual_income or 0 }},
+                    {{ user.savings_balance or 0 }},
+                    {{ 10000 if user.existing_loans else 0 }}
+                ],
+                backgroundColor: ["#00c6ff", "#f77062", "#fd746c"],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#cccccc',
+                        font: { family: 'Inter', weight: '500', size: 14 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#bbbbbb',
+                        font: { family: 'Inter', size: 12 }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                    ticks: {
+                        color: '#bbbbbb',
+                        font: { family: 'Inter', size: 12 }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
