@@ -8,12 +8,12 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
 # Load API key from environment variable
-genai.configure(api_key=os.getenv("GENAI_API_KEY"))
+genai.configure(api_key=("AIzaSyDHr5sdvOWlSNUIQlV4O-u6oYtdSLy3Nnk"))
 model = genai.GenerativeModel("gemini-1.5-pro")
 
 # Database config from environment
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "127.0.0.1"),
+    "host": "104.197.224.109",
     "user": os.getenv("DB_USER", "flask_user"),
     "password": os.getenv("DB_PASSWORD", "test123"),
     "database": os.getenv("DB_NAME", "user_profiles_db")
@@ -93,6 +93,8 @@ def dashboard():
     conn.close()
     return render_template("dashboard.html", user=user)
 
+
+
 @app.route("/ask", methods=["POST"])
 def ask():
     if "user_id" not in session:
@@ -119,7 +121,13 @@ Employer: {user['employer_name']} | Job Title: {user['job_title']}
     """
 
     conversation = "\n".join(session["chat_history"])
-    full_prompt = f"{context}\n\nConversation so far:\n{conversation}\n\nUser: {prompt}\nAI:"
+    print(f"[ASK] Current conversation history:\n{conversation}")
+    if not conversation.strip():
+        full_prompt = f"{context}\n\nYou are a financial coach that offers personalized guidance and recommendations based on user profiles, financial goals, and real-time insights. You should be accessible across all age groups, adapting to different financial systems and cultural contexts.\n\nBased on this, provide detailed financial insights and suggestions to improve this user's financial health. Recommend ways to reduce loans, improve investments, and better utilize employer benefits. Offer suggestions tailored to the current income, age, and expenses. Use clear formatting.\n\nUser: {prompt}\nAI:"
+        print(f"[ASK] Full prompt to model:\n{full_prompt}")
+    else:
+        full_prompt = f"{context}\n\nConversation so far:\n{conversation}\n\nUser: {prompt}\nAI:"
+
     print(f"[ASK] Full prompt to model:\n{full_prompt}")
     response = model.generate_content(full_prompt)
     print(f"[ASK] Model response: {response.text!r}")
