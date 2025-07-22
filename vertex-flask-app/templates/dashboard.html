@@ -203,7 +203,11 @@
     </div>
 
     <div class="avatar-score">
-        <img src="{{ url_for('static', filename='images/avatar.webp') }}" alt="Avatar">
+        {% if user.gender == 'Female' %}
+            <img src="{{ url_for('static', filename='images/avaFemale.png') }}" alt="Female Avatar">
+        {% else %}
+        <img src="{{ url_for('static', filename='images/avatar.webp') }}" alt="Default Avatar">
+        {% endif %}
         <div class="liquid-fill" id="liquidFillBar"></div>
         <div class="percentage-label" id="percentageLabel">0%</div>
     </div>
