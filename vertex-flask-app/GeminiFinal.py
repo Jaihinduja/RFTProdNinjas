@@ -3,7 +3,7 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
 import os
-
+from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
@@ -71,7 +71,7 @@ def login():
         password = request.form["password"]
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        cursor.execute("SELECT * FROM user_profile WHERE username = %s", (username,))
         user = cursor.fetchone()
         conn.close()
         if user and check_password_hash(user["password_hash"], password):
@@ -88,12 +88,39 @@ def dashboard():
         return redirect("/login")
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
+    cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
     user = cursor.fetchone()
     conn.close()
     return render_template("dashboard.html", user=user)
 
 
+def calculate_derived_fields(user):
+    #dob = datetime.strptime(user['DOB'], "%Y/%m/%d")
+    dob = user['DOB']
+    today = datetime.today()
+    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+    total_income = user['annual_income'] + user['Other_Income']
+    total_savings = user['Bank_Balance'] + user['Emergency_Fund']
+    asset_value = user['Car_Value'] + user['House_Value'] + user['Other_Assets']
+    loans = user['Auto_Loan'] + user['Personal_Loan'] + user['Student_Loan'] + user['Credit_Cards_Outstanding']
+    employer_benefit_income = 0.01 * user['annual_income'] * user['Employer_Benefit_401k_Percentage']
+    annual_employer_pension = user['Annual_Employer_Pension']
+
+    return {
+        'Age': age,
+        'Gender': user['gender'],
+        'Marital_Status': user['marital_status'],
+        'Total_Income': total_income,
+        'Total_Savings': total_savings,
+        'Asset_Value': asset_value,
+        'Loans': loans,
+        'Investments': user['Investments_in_Crypto'] + user['Investments_in_Brokerage'],
+        'Tax_Bracket': user['Tax_Bracket'],
+        'Monthly_Expenses': user['Monthly_Expenses'],
+        'Employer_Benefit_Income': employer_benefit_income + annual_employer_pension,
+        'Preferred_Language': user['preferred_Language']
+    }
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -107,26 +134,56 @@ def ask():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
+    cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
     user = cursor.fetchone()
     print(f"[ASK] Loaded user profile for user_id={session['user_id']}: {user}")
     conn.close()
 
-    context = f"""
-User Profile:
-Name: {user['name']}
-Annual Income: ${user['annual_income']}
-Credit Score: {user['credit_score']}
-Employer: {user['employer_name']} | Job Title: {user['job_title']}
-    """
+    # Call the calculate_derived_fields function here
+    derived = calculate_derived_fields(user)
+    print(f"[ASK] Derived fields: {derived}")
 
+    #context = f"""
+#User Profile:
+#Name: {user['name']}
+#Annual Income: ${user['annual_income']}
+#Credit Score: {user['credit_score']}
+#Employer: {user['employer_name']} | Job Title: {user['job_title']}
+ #   """
+    context = f"""
+Name: {user['name']}
+Gender: {derived['Gender']}
+Age: {derived['Age']}
+Marital Status: {derived['Marital_Status']}
+Preferred Language: {derived['Preferred_Language']}
+Total Income: ${derived['Total_Income']:,}
+Total Savings: ${derived['Total_Savings']:,}
+Asset Value: ${derived['Asset_Value']:,}
+Loans: ${derived['Loans']:,}
+Employer Benefits: ${derived['Employer_Benefit_Income']:,}
+Investments: ${derived['Investments']:,}
+Tax Bracket: {derived['Tax_Bracket']}%
+Monthly Expenses: ${derived['Monthly_Expenses']:,}
+"""
     conversation = "\n".join(session["chat_history"])
     print(f"[ASK] Current conversation history:\n{conversation}")
-    if not conversation.strip():
-        full_prompt = f"{context}\n\nYou are a financial coach that offers personalized guidance and recommendations based on user profiles, financial goals, and real-time insights. You should be accessible across all age groups, adapting to different financial systems and cultural contexts.\n\nBased on this, provide detailed financial insights and suggestions to improve this user's financial health. Recommend ways to reduce loans, improve investments, and better utilize employer benefits. Offer suggestions tailored to the current income, age, and expenses. Use clear formatting.\n\nUser: {prompt}\nAI:"
-        print(f"[ASK] Full prompt to model:\n{full_prompt}")
+    if not session["chat_history"]:
+        full_prompt = (
+            f"{context}\n\n"
+            "You are a financial coach that offers personalized guidance and recommendations based on user profiles, financial goals, and real-time insights. "
+            "You should be accessible across all age groups, adapting to different financial systems and cultural contexts.\n\n"
+            "Based on this, provide detailed financial insights and suggestions to improve this user's financial health. "
+            "Recommend ways to reduce loans, improve investments, and better utilize employer benefits. "
+            "Offer suggestions tailored to the current income, age, and expenses. Use clear formatting.\n\n"
+            f"User: {prompt}\nAI:"
+        )
     else:
-        full_prompt = f"{context}\n\nConversation so far:\n{conversation}\n\nUser: {prompt}\nAI:"
+        conversation = "\n".join(session["chat_history"])
+        full_prompt = (
+            f"{context}\n\n"
+            f"Conversation so far:\n{conversation}\n\n"
+            f"User: {prompt}\nAI:"
+        )
 
     print(f"[ASK] Full prompt to model:\n{full_prompt}")
     response = model.generate_content(full_prompt)
