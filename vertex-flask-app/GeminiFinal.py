@@ -20,10 +20,10 @@ model = genai.GenerativeModel("gemini-1.5-pro")
 
 # Database config from environment
 DB_CONFIG = {
-    "host": "104.197.224.109",
-    "user": os.getenv("DB_USER", "flask_user"),
-    "password": os.getenv("DB_PASSWORD", "test123"),
-    "database": os.getenv("DB_NAME", "user_profiles_db")
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
 }
 
 # Path to store .wav files
