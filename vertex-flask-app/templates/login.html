@@ -53,6 +53,26 @@
             font-size: 1em;
         }
 
+        .flash-message-container {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            width: 100%;
+            text-align: center;
+        }
+         .flash-message {
+             display: inline-block;
+             background-color: #00aaff;
+             color: #fff;
+             font-weight: bold;
+             padding: 12px 24px;
+             border-radius: 10px;
+             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+             animation: fadein 0.5s;
+         }
+
         input::placeholder {
             color: #ccc;
         }
@@ -87,9 +107,23 @@
             color: #ffffff;
             text-decoration: underline;
         }
+        @keyframes fadein {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
+<!-- Flash Message -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="flash-message-container">
+    {% for message in messages %}
+    <div class="flash-message">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 
 <div class="glass-container">
     <h2>Login</h2>

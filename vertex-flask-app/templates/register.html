@@ -97,13 +97,10 @@
         <label>Password:</label>
         <input type="password" name="password" placeholder="Enter password" required>
 
-        <h3>Financial Profile</h3>
+        <h3>Personal Details</h3>
 
         <label>Full Name:</label>
         <input type="text" name="name" placeholder="John Doe" required>
-
-        <label>Age:</label>
-        <input type="number" name="age" placeholder="35">
 
         <label>Gender:</label>
         <select name="gender">
@@ -113,8 +110,8 @@
             <option>Other</option>
         </select>
 
-        <label>Location:</label>
-        <input type="text" name="location" placeholder="City or State">
+        <label>Date of Birth:</label>
+        <input type="date" name="DOB">
 
         <label>Marital Status:</label>
         <input type="text" name="marital_status" placeholder="Single/Married">
@@ -125,20 +122,10 @@
         <label>Spouse Name:</label>
         <input type="text" name="spouse_name" placeholder="If applicable">
 
-        <label>Annual Income ($):</label>
-        <input type="number" name="annual_income" step="0.01" placeholder="e.g. 80000">
+        <label>Preferred Language:</label>
+        <input type="text" name="preferred_Language" placeholder="e.g. English">
 
-        <label>Credit Score:</label>
-        <input type="number" name="credit_score" placeholder="e.g. 750">
-
-        <label>Existing Loans:</label>
-        <textarea name="existing_loans" placeholder="Describe your current loans..."></textarea>
-
-        <label>Savings Balance ($):</label>
-        <input type="number" name="savings_balance" step="0.01" placeholder="e.g. 15000">
-
-        <label>Employment Status:</label>
-        <input type="text" name="employment_status" placeholder="Employed/Unemployed/Self-employed">
+        <h3>Employment and Income</h3>
 
         <label>Employer Name:</label>
         <input type="text" name="employer_name" placeholder="Company name">
@@ -146,8 +133,65 @@
         <label>Job Title:</label>
         <input type="text" name="job_title" placeholder="Your designation">
 
-        <label>Years of Experience:</label>
-        <input type="number" name="years_of_experience" placeholder="e.g. 10">
+        <label>Annual Income ($):</label>
+        <input type="number" name="annual_income" step="0.01" placeholder="e.g. 80000">
+
+        <label>Other Income ($):</label>
+        <input type="number" name="Other_Income" step="0.01" placeholder="e.g. 5000">
+
+        <h3>Assets</h3>
+
+        <label>Bank Balance ($):</label>
+        <input type="number" name="Bank_Balance" step="0.01">
+
+        <label>Emergency Fund ($):</label>
+        <input type="number" name="Emergency_Fund" step="0.01">
+
+        <label>Car Value ($):</label>
+        <input type="number" name="Car_Value" step="0.01">
+
+        <label>House Value ($):</label>
+        <input type="number" name="House_Value" step="0.01">
+
+        <label>Other Assets ($):</label>
+        <input type="number" name="Other_Assets" step="0.01">
+
+        <label>Employer 401k Benefit (%):</label>
+        <input type="number" step="0.1" name="Employer_Benefit_401k_Percentage" placeholder="e.g. 4.5">
+
+        <label>Annual Employer Pension ($):</label>
+        <input type="number" name="Annual_Employer_Pension" step="0.01">
+
+        <h3>Liabilities</h3>
+
+        <label>Auto Loan ($):</label>
+        <input type="number" name="Auto_Loan" step="0.01">
+
+        <label>Personal Loan ($):</label>
+        <input type="number" name="Personal_Loan" step="0.01">
+
+        <label>Student Loan ($):</label>
+        <input type="number" name="Student_Loan" step="0.01">
+
+        <label>Outstanding Credit Card Balance ($):</label>
+        <input type="number" name="Credit_Cards_Outstanding" step="0.01">
+
+        <h3>Investments & Expenses</h3>
+
+        <label>Credit Score:</label>
+        <input type="number" name="credit_score">
+
+        <label>Investments in Crypto ($):</label>
+        <input type="number" name="Investments_in_Crypto" step="0.01">
+
+        <label>Investments in Brokerage ($):</label>
+        <input type="number" name="Investments_in_Brokerage" step="0.01">
+
+        <label>Tax Bracket (%):</label>
+        <input type="number" name="Tax_Bracket">
+
+        <label>Monthly Expenses ($):</label>
+        <input type="number" name="Monthly_Expenses" step="0.01">
 
         <input type="submit" value="Register">
     </form>

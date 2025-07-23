@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, url_for
+from flask import Flask, flash, session,render_template, request, redirect, session, jsonify, url_for
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 import traceback
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 # Load API key from environment variable
 genai.configure(api_key=("AIzaSyDHr5sdvOWlSNUIQlV4O-u6oYtdSLy3Nnk"))
@@ -39,39 +39,59 @@ def get_db_connection():
 def register():
     if request.method == "POST":
         username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
+        password_hash = generate_password_hash(request.form["password"])
+
+        # Convert DOB string to date
+        dob_str = request.form.get("DOB")
+        dob = datetime.strptime(dob_str, "%Y-%m-%d").date() if dob_str else None
 
         profile_data = (
-            username, password,
+            username,
+            password_hash,
             request.form.get("name"),
-            request.form.get("age"),
             request.form.get("gender"),
-            request.form.get("location"),
+            dob,
             request.form.get("marital_status"),
             request.form.get("num_dependents"),
             request.form.get("spouse_name"),
-            request.form.get("annual_income"),
-            request.form.get("credit_score"),
-            request.form.get("existing_loans"),
-            request.form.get("savings_balance"),
-            request.form.get("employment_status"),
+            request.form.get("preferred_Language"),
             request.form.get("employer_name"),
             request.form.get("job_title"),
-            request.form.get("years_of_experience")
+            request.form.get("annual_income"),
+            request.form.get("Other_Income"),
+            request.form.get("Bank_Balance"),
+            request.form.get("Emergency_Fund"),
+            request.form.get("Car_Value"),
+            request.form.get("House_Value"),
+            request.form.get("Other_Assets"),
+            request.form.get("Employer_Benefit_401k_Percentage"),
+            request.form.get("Annual_Employer_Pension"),
+            request.form.get("Auto_Loan"),
+            request.form.get("Personal_Loan"),
+            request.form.get("Student_Loan"),
+            request.form.get("Credit_Cards_Outstanding"),
+            request.form.get("credit_score"),
+            request.form.get("Investments_in_Crypto"),
+            request.form.get("Investments_in_Brokerage"),
+            request.form.get("Tax_Bracket"),
+            request.form.get("Monthly_Expenses")
         )
 
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-                       INSERT INTO users (
-                           username, password_hash, name, age, gender, location,
-                           marital_status, num_dependents, spouse_name, annual_income,
-                           credit_score, existing_loans, savings_balance,
-                           employment_status, employer_name, job_title, years_of_experience
-                       ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       INSERT INTO user_profile (
+                           username, password_hash, name, gender, DOB, marital_status, num_dependents,
+                           spouse_name, preferred_Language, employer_name, job_title, annual_income, Other_Income,
+                           Bank_Balance, Emergency_Fund, Car_Value, House_Value, Other_Assets,
+                           Employer_Benefit_401k_Percentage, Annual_Employer_Pension,
+                           Auto_Loan, Personal_Loan, Student_Loan, Credit_Cards_Outstanding,
+                           credit_score, Investments_in_Crypto, Investments_in_Brokerage, Tax_Bracket, Monthly_Expenses
+                       ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                        """, profile_data)
         conn.commit()
         conn.close()
+        flash("Registration successful! Please log in.")
         return redirect("/login")
     return render_template("register.html")
 
