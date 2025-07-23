@@ -191,7 +191,7 @@ def dashboard():
         return redirect("/login")
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
+    cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
     user = cursor.fetchone()
     conn.close()
 
