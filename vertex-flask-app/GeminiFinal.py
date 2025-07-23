@@ -82,7 +82,7 @@ def login():
         password = request.form["password"]
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        cursor.execute("SELECT * FROM user_profile WHERE username = %s", (username,))
         user = cursor.fetchone()
         conn.close()
         if user and check_password_hash(user["password_hash"], password):
@@ -106,7 +106,7 @@ def onboarding_page():
         # Verify user
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        cursor.execute("SELECT * FROM user_profile WHERE username = %s", (username,))
         user = cursor.fetchone()
         conn.close()
 
@@ -166,7 +166,7 @@ def voice_login():
         if success:
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT * FROM user_profile WHERE username = %s", (username,))
             user = cursor.fetchone()
             conn.close()
 
@@ -191,7 +191,7 @@ def dashboard():
         return redirect("/login")
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
+    cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
     user = cursor.fetchone()
     conn.close()
 
