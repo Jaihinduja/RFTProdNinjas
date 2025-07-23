@@ -3,7 +3,14 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
 import os
-from datetime import datetime
+from datetime import datetime, UTC
+from werkzeug.utils import secure_filename
+from voice_matcher import enroll_user, identify_user
+from pydub import AudioSegment
+from pathlib import Path
+from dotenv import load_dotenv
+import traceback
+
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
@@ -18,6 +25,10 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "test123"),
     "database": os.getenv("DB_NAME", "user_profiles_db")
 }
+
+# Path to store .wav files
+UPLOAD_FOLDER = "uploads"
+Path(UPLOAD_FOLDER).mkdir(exist_ok=True)
 
 def get_db_connection():
     conn = mysql.connector.connect(**DB_CONFIG)
@@ -82,6 +93,98 @@ def login():
             return "Invalid credentials", 401
     return render_template("login.html")
 
+@app.route("/onboarding", methods=["GET", "POST"])
+def onboarding_page():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        audio = request.files.get("audio_data")
+
+        if not username or not password or not audio:
+            return "Missing required fields", 400
+
+        # Verify user
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if not user or not check_password_hash(user["password_hash"], password):
+            return "Invalid credentials", 401
+
+        try:
+            # Save audio + enroll
+            filename = secure_filename(f"{username}_{datetime.now(UTC).timestamp()}.wav")
+            raw_path = os.path.join(UPLOAD_FOLDER, f"raw_{filename}")
+            audio.save(raw_path)
+
+            converted_path = os.path.join(UPLOAD_FOLDER, filename)
+            sound = AudioSegment.from_file(raw_path)
+            sound = sound.set_channels(1).set_frame_rate(16000)
+            sound.export(converted_path, format="wav")
+
+            enroll_user(converted_path, username)
+            os.remove(raw_path)
+
+            return render_template("onboarding.html", success=True)
+
+        except Exception as e:
+            print("Error in enroll_user:", str(e))
+            traceback.print_exc()
+            return f"Voice enrollment failed: {str(e)}", 500
+
+    return render_template("onboarding.html")
+
+@app.route("/voice-login", methods=["POST"])
+def voice_login():
+    audio = request.files.get("audio_data")
+    if not audio:
+        return jsonify({"success": False, "error": "No audio uploaded"}), 400
+
+    try:
+        # Save raw upload
+        timestamp = datetime.now(UTC).timestamp()
+        filename = secure_filename(f"login_{timestamp}.wav")
+        raw_path = os.path.join(UPLOAD_FOLDER, f"raw_{filename}")
+        audio.save(raw_path)
+
+        # Convert to WAV mono, 16kHz
+        converted_path = os.path.join(UPLOAD_FOLDER, filename)
+        sound = AudioSegment.from_file(raw_path)
+        sound = sound.set_channels(1).set_frame_rate(16000)
+        sound.export(converted_path, format="wav")
+
+        # Voice identification
+        username, score, success = identify_user(converted_path)
+
+        # Clean up raw file
+        os.remove(raw_path)
+        if os.path.exists(converted_path):
+            os.remove(converted_path)
+
+        if success:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            conn.close()
+
+            if user:
+                session["user_id"] = user["id"]
+                session["chat_history"] = []
+                return jsonify({"success": True, "redirect": "/dashboard"})
+            else:
+                return jsonify({"success": False, "error": "User not found"}), 404
+        else:
+            return jsonify({"success": False, "error": "Voice not recognized"}), 401
+
+    except Exception as e:
+        import traceback
+        print("Error in voice-login:", str(e))
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -91,6 +194,10 @@ def dashboard():
     cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
     user = cursor.fetchone()
     conn.close()
+
+    if not user:
+        return "User not found", 404
+
     return render_template("dashboard.html", user=user)
 
 

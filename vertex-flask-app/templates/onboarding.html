@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Enrollment</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .glass-container {
+      background: rgba(20, 24, 61, 0.85);
+      border-radius: 15px;
+      padding: 40px;
+      width: 350px;
+      color: #ffffff;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 18px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 1em;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background-image: linear-gradient(315deg, #00c6ff 0%, #0072ff 74%);
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    button:hover {
+      background-image: linear-gradient(315deg, #0072ff 0%, #00c6ff 74%);
+    }
+
+    #status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+<div class="glass-container">
+  <h2>🎤 Voice Onboarding</h2>
+
+  <form id="onboardingForm">
+    <label for="username">Username:</label>
+    <input type="text" id="username" required placeholder="Enter your username">
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" required placeholder="Enter your password">
+
+    <button type="button" onclick="startRecording()">Start Voice Enrollment</button>
+    <div id="status">Recording will auto-stop after 3 seconds...</div>
+  </form>
+</div>
+
+<script>
+  let mediaRecorder;
+  let audioChunks = [];
+
+  function startRecording() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) {
+      alert("Please enter both username and password.");
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: "audio/wav" });
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("password", password);
+        formData.append("audio_data", blob);
+
+        fetch("/onboarding", {
+          method: "POST",
+          body: formData
+        }).then(res => {
+          if (res.ok) {
+            document.getElementById("status").innerText = "Voice enrolled successfully!";
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 3000);
+          } else {
+              document.getElementById("status").innerText = "Enrollment failed.";
+          }
+        });
+      };
+
+      mediaRecorder.start();
+      document.getElementById("status").innerText = "🎙️ Recording...";
+
+      setTimeout(() => {
+        mediaRecorder.stop();
+        document.getElementById("status").innerText = "Processing voice...";
+      }, 3000);
+    });
+  }
+</script>
+</body>
+</html>

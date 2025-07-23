@@ -73,6 +73,9 @@
         button:hover {
             background-image: linear-gradient(315deg, #0072ff 0%, #00c6ff 74%);
         }
+       .divider { text-align: center; margin: 20px 0; font-size: 0.9em; }
+       #voice-status { text-align: center; margin-top: 10px; font-size: 0.9em; color: #fff; }
+
 
         p {
             text-align: center;
@@ -99,8 +102,51 @@
 
         <button type="submit">Login</button>
     </form>
+
+    <div class="divider">OR</div>
+
+    <button onclick="startVoiceLogin()">🎤 Login by Voice</button>
+    <p id="voice-status">Click to speak and authenticate</p>
+
     <p>Don't have an account? <a href="/register">Register here</a>.</p>
+    <p>After registering, enroll your voice. <a href="/onboarding">Enroll here</a></p>
 </div>
+
+<script>
+let mediaRecorder;
+let audioChunks = [];
+
+function startVoiceLogin() {
+    document.getElementById("voice-status").innerText = "🎙️ Listening...";
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio_data', blob);
+
+            fetch('/voice-login', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("voice-status").innerText = "✅ Authenticated! Redirecting...";
+                    setTimeout(() => window.location.href = data.redirect, 1500);
+                } else {
+                    document.getElementById("voice-status").innerText = "❌ Voice login failed.";
+                }
+            });
+        };
+
+        audioChunks = [];
+        mediaRecorder.start();
+        setTimeout(() => mediaRecorder.stop(), 5000);  // auto-stop
+    });
+}
+</script>
 
 </body>
 </html>
