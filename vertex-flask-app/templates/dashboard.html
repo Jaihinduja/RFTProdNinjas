@@ -194,7 +194,7 @@
         </div>
         <div class="card">
             <h3>Savings Balance</h3>
-            <p>${{ user.savings_balance }}</p>
+            <p>${{ user.Bank_Balance }}</p>
         </div>
         <div class="card">
             <h3>Employment</h3>
@@ -298,8 +298,8 @@
     // Fill bar animation and label
     document.addEventListener("DOMContentLoaded", () => {
         const income = {{ user.annual_income or 0 }};
-        const savings = {{ user.savings_balance or 0 }};
-        const loans = {{ 10000 if user.existing_loans else 0 }};
+        const savings = {{ user.Bank_Balance or 0 }};
+        const loans = {{ user.Auto_Loan or 0 }};
         const maxPossible = 150000;
         const score = ((income + savings - loans) / maxPossible) * 100;
         const heightPercent = Math.max(10, Math.min(score, 100));
@@ -320,8 +320,8 @@
                 label: "Amount ($)",
                 data: [
                     {{ user.annual_income or 0 }},
-                    {{ user.savings_balance or 0 }},
-                    {{ 10000 if user.existing_loans else 0 }}
+                    {{ user.Bank_Balance or 0 }},
+                    {{ user.Auto_Loan or 0 }}
                 ],
                 backgroundColor: ["#00c6ff", "#f77062", "#fd746c"],
                 borderRadius: 6
