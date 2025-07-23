@@ -23,30 +23,30 @@
             padding: 20px;
         }
 
-        .glass-container {
-            position: fixed; /* Change to fixed for viewport positioning */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%); /* Center horizontally and vertically */
+            .glass-container {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
 
-            width: 12in;
-            height: 10in;
+                width: 80vw;   /* Viewport width - adjust as needed */
+                height: 85vh;  /* Viewport height - adjust as needed */
 
-            display: flex;
-            flex-direction: column;
-            background: rgba(20, 20, 20, 0.92);
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
-            box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                background: rgba(20, 20, 20, 0.92);
+                border-radius: 20px;
+                backdrop-filter: blur(4px);
+                box-sizing: border-box;
+                overflow: hidden;
 
-            border: 2px solid rgba(0, 255, 255, 0.4); /* illuminated border */
-            box-shadow:
-                    0 0 12px rgba(0, 255, 255, 0.5), /* outer glow */
-                    0 0 24px rgba(0, 255, 255, 0.3); /* extended glow */
+                border: 2px solid rgba(0, 255, 255, 0.4); /* illuminated border */
+                box-shadow:
+                        0 0 12px rgba(0, 255, 255, 0.5), /* outer glow */
+                        0 0 24px rgba(0, 255, 255, 0.3); /* extended glow */
 
-            overflow: visible;
-            z-index: 2;
-        }
+                z-index: 2;
+            }
         .message-label {
             font-family: 'Inter', sans-serif;
             font-size: 16px;
@@ -73,6 +73,14 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .glass-container {
+                width: 95vw;
+                height: 90vh;
+                border-radius: 12px;
             }
         }
 
