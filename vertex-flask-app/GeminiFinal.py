@@ -82,7 +82,7 @@ def login():
         password = request.form["password"]
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM user_profile WHERE username = %s", (username,))
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
         conn.close()
         if user and check_password_hash(user["password_hash"], password):
