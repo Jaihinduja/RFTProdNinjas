@@ -3,13 +3,34 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
 import os
+import traceback
+import vertexai
 from datetime import datetime, UTC
 from werkzeug.utils import secure_filename
 from voice_matcher import enroll_user, identify_user
 from pydub import AudioSegment
 from pathlib import Path
+from vertexai.generative_models import GenerativeModel
+from google.cloud import translate_v2 as translate
+from google.generativeai.types import GenerationConfig
 from dotenv import load_dotenv
-import traceback
+#from google import genai
+from google.genai.types import HttpOptions
+
+os.environ['GOOGLE_CLOUD_PROJECT']='my-voice-auth-demo-001'
+os.environ['GOOGLE_CLOUD_LOCATION']='us-central1'
+os.environ['GOOGLE_GENAI_USE_VERTEXAI']='True'
+os.environ["GOOGLE_API_KEY"] = "AIzaSyDHr5sdvOWlSNUIQlV4O-u6oYtdSLy3Nnk"
+
+
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Users/Nikhil_PC/Downloads/Service_key.JSON"
+translate_client = translate.Client()
+
+config = GenerationConfig(
+            temperature=0.3,
+            top_k=20,
+            top_p=0.7
+        )
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
@@ -248,6 +269,13 @@ def calculate_derived_fields(user):
         'Employer_Benefit_Income': employer_benefit_income + annual_employer_pension,
         'Preferred_Language': user['preferred_Language']
     }
+def translate_to_en(text):
+    translation = translate_client.translate(text, target_language="en")
+    return translation["translatedText"], translation["detectedSourceLanguage"]
+
+def translate_from_en(text, target_language):
+    translation = translate_client.translate(text, target_language=target_language)
+    return translation["translatedText"]
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -263,12 +291,12 @@ def ask():
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
     user = cursor.fetchone()
-    print(f"[ASK] Loaded user profile for user_id={session['user_id']}: {user}")
+    #print(f"[ASK] Loaded user profile for user_id={session['user_id']}: {user}")
     conn.close()
 
     # Call the calculate_derived_fields function here
     derived = calculate_derived_fields(user)
-    print(f"[ASK] Derived fields: {derived}")
+    #print(f"[ASK] Derived fields: {derived}")
 
     #context = f"""
 #User Profile:
@@ -294,35 +322,53 @@ Monthly Expenses: ${derived['Monthly_Expenses']:,}
 """
     conversation = "\n".join(session["chat_history"])
     print(f"[ASK] Current conversation history:\n{conversation}")
+    translated_input, source_lang = translate_to_en(prompt)
+    prompt_en = translated_input
+
+    conciseness_instruction = (
+        "Respond concisely and directly to the user's question. "
+        "Do not provide lengthy or generic explanations. "
+        "If the user asks for more details, only then elaborate."
+    )
+
     if not session["chat_history"]:
         full_prompt = (
             f"{context}\n\n"
+            f"{conciseness_instruction}\n"
             "You are a financial coach that offers personalized guidance and recommendations based on user profiles, financial goals, and real-time insights. "
             "You should be accessible across all age groups, adapting to different financial systems and cultural contexts.\n\n"
-            "Based on this, provide detailed financial insights and suggestions to improve this user's financial health. "
+            "Based on this, provide financial insights and suggestions(only if user asks) to improve this user's financial health. "
             "Recommend ways to reduce loans, improve investments, and better utilize employer benefits. "
-            "Offer suggestions tailored to the current income, age, and expenses. Use clear formatting.\n\n"
-            f"User: {prompt}\nAI:"
+            "Offer suggestions tailored to the current user profile. Use clear formatting.\n\n"
+            f"User: {prompt_en}"
         )
     else:
         conversation = "\n".join(session["chat_history"])
         full_prompt = (
             f"{context}\n\n"
             f"Conversation so far:\n{conversation}\n\n"
-            f"User: {prompt}\nAI:"
+            f"User: {prompt_en}\n"
         )
+    chat_history = session.get("chat_history", [])
+    print(f"[ASK] Chat History:\n{chat_history}")
+    context_prompt = "\n".join(chat_history + [f"User: {full_prompt}", "AI:"])
 
-    print(f"[ASK] Full prompt to model:\n{full_prompt}")
-    response = model.generate_content(full_prompt)
-    print(f"[ASK] Model response: {response.text!r}")
+    print(f"[ASK] Full prompt to model:\n{context_prompt}")
+    response = model.generate_content(context_prompt)
+    final_reply = translate_from_en(response.text, source_lang)
+    print(f"[ASK] AI:Model response: {final_reply!r}")
 
     # Update session memory
-    session["chat_history"].append(f"User: {prompt}")
-    session["chat_history"].append(f"AI: {response.text}")
+    #session["chat_history"].append(f"User: {full_prompt}")
+    #session["chat_history"].append(f"AI: {final_reply}")
+    chat_history.append(f"User: {full_prompt}")
+    chat_history.append(f"AI: {final_reply}")
+    session["chat_history"] = chat_history
     print(f"[ASK] Updated chat_history: {session['chat_history']}")
 
+
     return jsonify({
-        "response": response.text,
+        "response": final_reply,
         "suggestions": ["What can I do to increase savings?", "How to improve credit score?", "Can I afford a loan?"]
     })
 
