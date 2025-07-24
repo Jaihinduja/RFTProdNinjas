@@ -701,6 +701,8 @@
                               fill="currentColor"/>
                     </svg>
                 </button>
+
+                <button class="voice-btn" id="stopSpeaking" onclick="stopSpeaking()" title="Stop Speaking" style="display: none;">🛑</button>
             </div>
 
             <div class="suggestions">
@@ -884,12 +886,39 @@
         }
     }
 
-    function speak(text) {
+    let currentUtterance = null;
 
+    function speak(text) {
         const synth = window.speechSynthesis;
+        if (synth.speaking) synth.cancel(); // Cancel any existing
+
         const utter = new SpeechSynthesisUtterance(text);
-        utter.voice = synth.getVoices().find(voice => voice.name.includes("Google"));
+        const voices = synth.getVoices();
+        const englishVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google'))
+            || voices.find(v => v.lang.startsWith('en'))
+            || voices[0];
+
+        utter.voice = englishVoice;
+        utter.lang = 'en-US'; // Force language
+
+        currentUtterance = utter;
         synth.speak(utter);
+
+        document.getElementById("stopSpeaking").style.display = "inline-block";
+
+        utter.onend = () => {
+            currentUtterance = null;
+            document.getElementById("stopSpeaking").style.display = "none";
+        };
+    }
+
+    function stopSpeaking() {
+        const synth = window.speechSynthesis;
+        if (synth.speaking) {
+            synth.cancel();
+            document.getElementById("stopSpeaking").style.display = "none";
+            currentUtterance = null;
+        }
     }
 
     function scrollToBottom() {
