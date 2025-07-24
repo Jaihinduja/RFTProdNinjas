@@ -31,6 +31,8 @@ config = GenerationConfig(
             top_k=20,
             top_p=0.7
         )
+import json
+import re
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
@@ -277,6 +279,82 @@ def translate_from_en(text, target_language):
     translation = translate_client.translate(text, target_language=target_language)
     return translation["translatedText"]
 
+
+def extract_json_from_gemini_response(response):
+    """
+    Extract and parse JSON from Gemini model response that may include markdown formatting.
+    """
+    try:
+        # Extract raw content text from response
+        text = response.text.strip()
+
+        # Remove code fences (e.g., ```json ... ```)
+        if text.startswith("```"):
+            text = re.sub(r"^```(json)?", "", text.strip(), flags=re.IGNORECASE)
+            text = re.sub(r"```$", "", text.strip())
+
+        return json.loads(text)
+    except Exception as e:
+        print("[ERROR] Failed to parse JSON from Gemini response:", e)
+        return {}
+
+def extract_json_from_gemini_response(response):
+    """
+    Extract and parse JSON from Gemini model response that may include markdown formatting.
+    """
+    try:
+        # Extract raw content text from response
+        text = response.text.strip()
+
+        # Remove code fences (e.g., ```json ... ```)
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?", "", text.strip(), flags=re.IGNORECASE)
+            text = re.sub(r"```$", "", text.strip())
+
+        return json.loads(text)
+    except Exception as e:
+        print("[ERROR] Failed to parse JSON from Gemini response:", e)
+        return {}
+
+
+
+def extract_json_from_gemini_response(response):
+    """
+    Extract and parse JSON from Gemini model response that may include markdown formatting.
+    """
+    try:
+        # Extract raw content text from response
+        text = response.text.strip()
+
+        # Remove code fences (e.g., ```json ... ```)
+        if text.startswith("```"):
+            text = re.sub(r"^```(json)?", "", text.strip(), flags=re.IGNORECASE)
+            text = re.sub(r"```$", "", text.strip())
+
+        return json.loads(text)
+    except Exception as e:
+        print("[ERROR] Failed to parse JSON from Gemini response:", e)
+        return {}
+
+def extract_json_from_gemini_response(response):
+    """
+    Extract and parse JSON from Gemini model response that may include markdown formatting.
+    """
+    try:
+        # Extract raw content text from response
+        text = response.text.strip()
+
+        # Remove code fences (e.g., ```json ... ```)
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?", "", text.strip(), flags=re.IGNORECASE)
+            text = re.sub(r"```$", "", text.strip())
+
+        return json.loads(text)
+    except Exception as e:
+        print("[ERROR] Failed to parse JSON from Gemini response:", e)
+        return {}
+
+
 @app.route("/ask", methods=["POST"])
 def ask():
     if "user_id" not in session:
@@ -284,12 +362,42 @@ def ask():
         return jsonify({"response": "Unauthorized"}), 401
 
     prompt = request.json.get("prompt")
+    
+    # Detect intent using Gemini
+    intent_prompt = f"""
+    Classify the user’s intent based on their message.
+
+    Categories:
+    - financial_advice
+    - update_user_details
+
+    Respond in JSON like this:
+    {{ "intent": "update_user_details" }}
+
+    User message: \"\"\"{prompt}\"\"\"
+    """
+    intent_response = model.generate_content(intent_prompt)
+    #intent_data = extract_json_from_gemini_response(intent_response)
+    print("[INTENT] intent_response is", intent_response)
+    print("[INTENT] supposed to be getting intent")
+    #print("[INTENT] intent_data", intent_data)
+
+    try:
+        #intent_data = json.loads(intent_response.text)
+        intent_data = extract_json_from_gemini_response(intent_response)
+        print("[INTENT] intent_data", intent_data)
+        intent = intent_data.get("intent")
+        print("[INTENT] intent", intent)
+    except Exception as e:
+        print("[ASK] Failed to parse intent response:", e)
+        intent = None
+
     print(f"[ASK] Received prompt: {prompt!r}")
     session.setdefault("chat_history", [])
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],))
+    cursor.execute("SELECT * FROM user_profile WHERE id = %s", (session["user_id"],)) #THIS LINE IS IMPORTANT
     user = cursor.fetchone()
     #print(f"[ASK] Loaded user profile for user_id={session['user_id']}: {user}")
     conn.close()
@@ -322,6 +430,84 @@ Monthly Expenses: ${derived['Monthly_Expenses']:,}
 """
     conversation = "\n".join(session["chat_history"])
     print(f"[ASK] Current conversation history:\n{conversation}")
+
+    if intent == "update_user_details":
+        print("[INTENT] has been successful")
+        sql_prompt = f"""
+        You are an assistant that extracts user account update information and generates parameterized SQL queries.
+
+        The user is updating their financial profile stored in the `user_profile` table. The user may want to update **one or multiple fields** in a single request. Detect all fields mentioned in the user message and include them all in the update.
+
+        Here are the allowed columns:
+        - name
+        - gender
+        - marital_status
+        - annual_income
+        - Other_Income
+        - Bank_Balance
+        - Emergency_Fund
+        - Car_Value
+        - House_Value
+        - Other_Assets
+        - Auto_Loan
+        - Personal_Loan
+        - Student_Loan
+        - Credit_Cards_Outstanding
+        - Employer_Benefit_401k_Percentage
+        - Annual_Employer_Pension
+        - Investments_in_Crypto
+        - Investments_in_Brokerage
+        - Tax_Bracket
+        - Monthly_Expenses
+        - preferred_Language
+        - DOB
+        - credit_score
+        - employer_name
+        - job_title
+        
+
+        Output valid JSON like:
+        {{
+        "fields": {{
+            "annual_income": "85000",
+            "preferred_Language": "English"
+        }},
+        "sql": "UPDATE user_profile SET annual_income = %s, preferred_Language = %s WHERE id = %s;"
+        }}
+
+        User message: \"\"\"{prompt}\"\"\"
+        Assume user_id = {session['user_id']}
+        Only include fields that are mentioned in the user request. If multiple fields are mentioned, update them all in a single SQL statement using %s placeholders..
+        """
+
+        sql_response = model.generate_content(sql_prompt)
+        print("sql_response", sql_response)
+
+        try:
+            #update_data = json.loads(sql_response.text)
+            update_data = extract_json_from_gemini_response(sql_response)
+            print("update_data", update_data)
+            fields = update_data.get("fields", {})
+            sql = update_data.get("sql", "")
+            print(f"[ASK] SQL to execute: {sql} with fields {fields}")
+
+            if sql and fields:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                values = list(fields.values()) + [session["user_id"]]
+                print("values", values)
+                num_placeholders = sql.count('?')
+                print("num_placeholders",num_placeholders)
+                cursor.execute(sql, values)
+                conn.commit()
+                conn.close()
+                return jsonify({
+                    "response": f"Your profile has been updated: {', '.join(fields.keys())}.",
+                    "suggestions": ["Change my phone number", "Update address", "What’s my tax bracket?"]
+                })
+        except Exception as e:
+            print("[ASK] Failed to parse or execute SQL:", e)
+
     translated_input, source_lang = translate_to_en(prompt)
     prompt_en = translated_input
 
