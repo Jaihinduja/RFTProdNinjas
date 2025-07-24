@@ -606,33 +606,25 @@
             <p>{{ user.job_title }} at {{ user.employer_name }}</p>
         </div>
     </div>
-    <div class="avatar-score">
-        {% if user.gender == 'Female' %}
-        <img src="{{ url_for('static', filename='images/avaFemale.png') }}" alt="Female Avatar">
-        {% else %}
-        <img src="{{ url_for('static', filename='images/avatar.webp') }}" alt="Default Avatar">
-        {% endif %}
-        <div class="liquid-fill" id="liquidFillBar"></div>
-        <div class="percentage-label" id="percentageLabel">0%</div>
-    </div>
-    <div id="avatar-speech" style="
-    position: absolute;
-    top: 400px; /* adjust this upward/downward */
-    left: 65%;
-    transform: translateX(-50%);
-    background: white;
-    color: #333;
-    padding: 8px 14px;
-    border-radius: 15px;
-    max-width: 250px;
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    animation: fadein 1s ease-in;
-    z-index: 10;
-  ">
-        Say "Hello Coach" to start the Financial Chat BOT
-    </div>
+    <div id="avatar-speech" onclick="openChatModal()" style="
+  cursor: pointer;
+  position: absolute;
+  top: 400px;
+  left: 65%;
+  transform: translateX(-50%);
+  background: white;
+  color: #333;
+  padding: 8px 14px;
+  border-radius: 15px;
+  max-width: 250px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  animation: fadein 1s ease-in;
+  z-index: 10;
+">
+  Click here / Say "Hello Coach"
+</div>
 </div>
 
 <style>
@@ -645,12 +637,12 @@
     <h3 style="text-align: center;">Financial Overview</h3>
     <canvas id="incomeChart" style="height: 250px; width: 100%;"></canvas>
 </div>
-<div class="chat-launcher">
+<!--<div class="chat-launcher">
 <button onclick="openChatModal()" title="Click here for Financial Chat Bot">
     <img src="{{ url_for('static', filename='images/chat_icon.png') }}" alt="Chat Icon" width="40" height="40">
     <span>Click here for Financial Chat Bot</span>
 </button>
-</div>
+</div>-->
 
 <div id="chatModal">
     <div class="glass-container">
