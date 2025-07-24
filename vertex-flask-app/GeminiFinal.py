@@ -317,44 +317,6 @@ def extract_json_from_gemini_response(response):
         return {}
 
 
-
-def extract_json_from_gemini_response(response):
-    """
-    Extract and parse JSON from Gemini model response that may include markdown formatting.
-    """
-    try:
-        # Extract raw content text from response
-        text = response.text.strip()
-
-        # Remove code fences (e.g., ```json ... ```)
-        if text.startswith("```"):
-            text = re.sub(r"^```(json)?", "", text.strip(), flags=re.IGNORECASE)
-            text = re.sub(r"```$", "", text.strip())
-
-        return json.loads(text)
-    except Exception as e:
-        print("[ERROR] Failed to parse JSON from Gemini response:", e)
-        return {}
-
-def extract_json_from_gemini_response(response):
-    """
-    Extract and parse JSON from Gemini model response that may include markdown formatting.
-    """
-    try:
-        # Extract raw content text from response
-        text = response.text.strip()
-
-        # Remove code fences (e.g., ```json ... ```)
-        if text.startswith("```"):
-            text = re.sub(r"^```(?:json)?", "", text.strip(), flags=re.IGNORECASE)
-            text = re.sub(r"```$", "", text.strip())
-
-        return json.loads(text)
-    except Exception as e:
-        print("[ERROR] Failed to parse JSON from Gemini response:", e)
-        return {}
-
-
 @app.route("/ask", methods=["POST"])
 def ask():
     if "user_id" not in session:
